@@ -239,6 +239,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         uint256 _amount,
         bool _withFreeze
     ) external onlyModule returns (bool) {
+        require(address(tokens[_token]) != address(0), "Token must be supported");
         if (_amount == 0) {
             return true;
         }
