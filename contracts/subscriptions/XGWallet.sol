@@ -79,7 +79,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         tokenAddresses.push(_token);
         tokens[_token] = IERC20(_token);
         if (_token == XGT_ADDRESS) {
-            tokens[_token].approve(address(freezer), 2**256 - 1);
+            xgt.approve(address(freezer), 2**256 - 1);
         }
     }
 

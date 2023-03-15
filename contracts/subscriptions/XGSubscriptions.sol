@@ -69,6 +69,14 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
         uint256 tokenPrice
     );
 
+    event UnpauseSubscriptionByCustomer(
+        address user,
+        bytes32 subscriptionID,
+        uint256 processID,
+        uint256 currency,
+        uint256 tokenPrice
+    );
+
     event ActivateSubscription(
         address user,
         bytes32 subscriptionID,
@@ -411,6 +419,28 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
         );
         require(successFee, "Pause payment to fee wallet failed.");
         emit PauseSubscriptionByCustomer(
+            subscriptions[subscriptionId].user,
+            subscriptionId,
+            processID,
+            uint256(IXGWallet.Currency.XGT),
+            tokenPrice
+        );
+    }
+
+    function unpauseSubscription(
+        bytes32 subscriptionId,
+        uint256 processID,
+        address tokenAddress,
+        uint256 tokenPrice
+    ) public onlyAuthorized whenNotPaused {
+        require(
+            subscriptions[subscriptionId].status == Status.PAUSED &&
+                subscriptions[subscriptionId].status != Status.UNSUBSCRIBED,
+            "Subscription is not paused"
+        );
+
+        subscriptions[subscriptionId].status = Status.ACTIVE;
+        emit UnpauseSubscriptionByCustomer(
             subscriptions[subscriptionId].user,
             subscriptionId,
             processID,
