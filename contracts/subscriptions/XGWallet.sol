@@ -11,9 +11,6 @@ import "../interfaces/IStakingModule.sol";
 
 import "@openzeppelin/contracts@3.4.0/token/ERC20/IERC20.sol";
 
-// Baal: Adapted the contract to support any token payments.
-// Important caveat: I do not have a sufficient understanding of payments to implement the correct behavior at this point.
-
 contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     using SafeMathUpgradeable for uint256;
 
@@ -26,6 +23,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     IStakingModule public staking;
     address public subscriptions;
     address public feeWallet;
+    address public bridgeFeeWallet;
     IXGHub public hub;
     address public purchases;
 
@@ -34,6 +32,10 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     uint256 public FREEZE_PERCENT_OF_MERCHANT_PAYMENT_IN_BP;
     uint256 public DEPOSIT_FEE_IN_BP;
     uint256 public WITHDRAW_FEE_IN_BP;
+    uint256 public PAYMENT_FEE_IN_BP;
+    uint256 public BRIDGE_FEE_IN_BP;
+
+    mapping (address => uint256) public merchantFeeInBP;
 
     mapping(address => bool) public stakeRevenue;
     mapping(address => UserBalanceSheet) public userBalance;
@@ -63,6 +65,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         FREEZE_PERCENT_OF_MERCHANT_PAYMENT_IN_BP = 100;
         DEPOSIT_FEE_IN_BP = 0;
         WITHDRAW_FEE_IN_BP = 0;
+        PAYMENT_FEE_IN_BP = 0;
 
         OwnableUpgradeable.__Ownable_init();
         PausableUpgradeable.__Pausable_init();
@@ -104,20 +107,37 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         FREEZE_PERCENT_OF_MERCHANT_PAYMENT_IN_BP = _freezeBP;
     }
 
-    function setFees(uint256 _depositFeeBP, uint256 _withdrawFeeBP)
+    function setFees(uint256 _depositFeeBP, uint256 _withdrawFeeBP, uint256 _paymentFeeBP, uint256 _bridgeFeeBP)
         external
         onlyOwner
     {
         require(
-            _depositFeeBP <= 10000 && _withdrawFeeBP <= 10000,
+            _depositFeeBP <= 10000 && _withdrawFeeBP <= 10000 && _paymentFeeBP <= 10000 && _bridgeFeeBP <= 10000,
             "Can't have a fee over more than 100%"
         );
         DEPOSIT_FEE_IN_BP = _depositFeeBP;
-        DEPOSIT_FEE_IN_BP = _withdrawFeeBP;
+        WITHDRAW_FEE_IN_BP = _withdrawFeeBP;
+        PAYMENT_FEE_IN_BP = _paymentFeeBP;
+        BRIDGE_FEE_IN_BP = _bridgeFeeBP;
+    }
+
+    function setMerchantFee(address _merchant, uint256 _paymentFeeBP)
+        external
+        onlyOwner
+    {
+        require(
+            _paymentFeeBP <= 10000,
+            "Can't have a fee over more than 100%"
+        );
+        merchantFeeInBP[_merchant] = _paymentFeeBP;
     }
 
     function setFeeWallet(address _feeWallet) external onlyHub {
         feeWallet = _feeWallet;
+    }
+
+    function setBridgeFeeWallet(address _bridgeFeeWallet) external onlyHub {
+        bridgeFeeWallet = _bridgeFeeWallet;
     }
 
     function toggleStakeRevenue(bool _stakeRevenue) external {
@@ -231,7 +251,6 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         require(tokens[_token].transfer(_receiver, _amount), "Token transfer failed.");
     }
 
-    // Baal: I am not sure what the correct behavior here should be
     function payWithToken(
         address _token, 
         address _from,
@@ -243,7 +262,12 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         if (_amount == 0) {
             return true;
         }
-        uint256 tokensLeft = _removeMaxFromTokenBalance(_from, _token, _amount);
+        uint256 xionFee = (_amount.mul(PAYMENT_FEE_IN_BP)).div(10000);
+        uint256 bridgeFee = (_amount.mul(BRIDGE_FEE_IN_BP)).div(10000);
+        uint256 merchantFee = (_amount.mul(merchantFeeInBP[_to])).div(10000);
+        uint256 totalAmount = _amount.add(xionFee).add(bridgeFee).add(merchantFee);
+
+        uint256 tokensLeft = _removeMaxFromTokenBalance(_from, _token, totalAmount);
 
         if (
             tokensLeft > 0 &&
@@ -255,16 +279,27 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
 
         if (tokensLeft == 0) {
-            _removeMaxFromRestrictedTokenBalance(_token, _from, _amount);
-            uint256 amountAfterFreeze = _amount;
+            _removeMaxFromRestrictedTokenBalance(_token, _from, totalAmount);
+            uint256 amountAfterFreeze = totalAmount;
             if (_withFreeze && _token == XGT_ADDRESS) {
-                amountAfterFreeze = _freeze(_to, _amount);
+                amountAfterFreeze = _freeze(_to, totalAmount);
             }
             if (stakeRevenue[_to]) {
                 _stake(_to, amountAfterFreeze);
             } else {
-                _transferToken(_token, _to, amountAfterFreeze);
+                uint256 rest = amountAfterFreeze;
+                if (xionFee > 0) {
+                    _transferFromToken(_token, _from, feeWallet, xionFee);
+                    rest = rest.sub(xionFee);
+                }
+                if (bridgeFee > 0) {
+                    _transferFromToken(_token, _from, bridgeFeeWallet, bridgeFee);
+                    rest = rest.sub(bridgeFee);
+                }
+                // merchant fee is sent to merchant anyway, so just send the rest
+                _transferToken(_token, _to, rest);
             }
+            // does not include any fees!
             totalCheckoutValue[_token] = totalCheckoutValue[_token].add(_amount);
             return true;
         }
