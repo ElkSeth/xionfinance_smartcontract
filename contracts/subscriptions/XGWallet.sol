@@ -36,6 +36,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     uint256 public BRIDGE_FEE_IN_BP;
 
     mapping (address => uint256) public merchantFeeInBP;
+    mapping (address => address) public merchantParent;
 
     mapping(address => bool) public stakeRevenue;
     mapping(address => UserBalanceSheet) public userBalance;
@@ -121,8 +122,19 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         BRIDGE_FEE_IN_BP = _bridgeFeeBP;
     }
 
+    function setMerchantParent(address _merchant, address _parent)
+        public
+        onlyOwner
+    {
+        require(
+            _merchant != address(0),
+            "Merchant address cannot be zero"
+        );
+        merchantParent[_merchant] = _parent;
+    }
+
     function setMerchantFee(address _merchant, uint256 _paymentFeeBP)
-        external
+        public
         onlyOwner
     {
         require(
@@ -132,11 +144,19 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         merchantFeeInBP[_merchant] = _paymentFeeBP;
     }
 
+    function setMerchantInfo(address _merchant, address _parent, uint256 _paymentFeeBP)
+        external
+        onlyOwner
+    {
+        setMerchantFee(_merchant, _paymentFeeBP);
+        setMerchantParent(_merchant, _parent);
+    }
+
     function setFeeWallet(address _feeWallet) external onlyHub {
         feeWallet = _feeWallet;
     }
 
-    function setBridgeFeeWallet(address _bridgeFeeWallet) external onlyHub {
+    function setBridgeFeeWallet(address _bridgeFeeWallet) external onlyOwner {
         bridgeFeeWallet = _bridgeFeeWallet;
     }
 
@@ -262,10 +282,17 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         if (_amount == 0) {
             return true;
         }
-        uint256 xionFee = (_amount.mul(PAYMENT_FEE_IN_BP)).div(10000);
-        uint256 bridgeFee = (_amount.mul(BRIDGE_FEE_IN_BP)).div(10000);
-        uint256 merchantFee = (_amount.mul(merchantFeeInBP[_to])).div(10000);
-        uint256 totalAmount = _amount.add(xionFee).add(bridgeFee).add(merchantFee);
+        uint256[3] memory fees; // xionFee, bridgeFee, merchantFees
+
+        fees[0] = (_amount.mul(PAYMENT_FEE_IN_BP)).div(10000);
+        fees[1] = (_amount.mul(BRIDGE_FEE_IN_BP)).div(10000);
+
+        address current = _to;
+        while (current != address(0)) {
+            fees[2] = fees[2].add((_amount.mul(merchantFeeInBP[current])).div(10000));
+            current = merchantParent[current];
+        }
+        uint256 totalAmount = _amount.add(fees[0]).add(fees[1]).add(fees[2]);
 
         uint256 tokensLeft = _removeMaxFromTokenBalance(_from, _token, totalAmount);
 
@@ -288,15 +315,22 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
                 _stake(_to, amountAfterFreeze);
             } else {
                 uint256 rest = amountAfterFreeze;
-                if (xionFee > 0) {
-                    _transferFromToken(_token, _from, feeWallet, xionFee);
-                    rest = rest.sub(xionFee);
+                if (fees[0] > 0) {
+                    _transferFromToken(_token, _from, feeWallet, fees[0]);
+                    rest = rest.sub(fees[0]);
                 }
-                if (bridgeFee > 0) {
-                    _transferFromToken(_token, _from, bridgeFeeWallet, bridgeFee);
-                    rest = rest.sub(bridgeFee);
+                if (fees[1] > 0) {
+                    _transferFromToken(_token, _from, bridgeFeeWallet, fees[1]);
+                    rest = rest.sub(fees[1]);
                 }
-                // merchant fee is sent to merchant anyway, so just send the rest
+                current = _to;
+                fees[2] = 0; // reusing fees[2] below (avoids max stack depth issues)
+                while (current != address(0)) {
+                    fees[2] = (_amount.mul(merchantFeeInBP[current])).div(10000);
+                    _transferToken(_token, current, fees[2]);
+                    rest = rest.sub(fees[2]);
+                    current = merchantParent[current];
+                }
                 _transferToken(_token, _to, rest);
             }
             // does not include any fees!
