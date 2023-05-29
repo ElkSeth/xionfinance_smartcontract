@@ -292,9 +292,9 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
             fees[2] = fees[2].add((_amount.mul(merchantFeeInBP[current])).div(10000));
             current = merchantParent[current];
         }
-        uint256 totalAmount = _amount.add(fees[0]).add(fees[1]).add(fees[2]);
+        uint256 leftover = _amount.sub(fees[0]).sub(fees[1]).sub(fees[2]);
 
-        uint256 tokensLeft = _removeMaxFromTokenBalance(_from, _token, totalAmount);
+        uint256 tokensLeft = _removeMaxFromTokenBalance(_from, _token, _amount);
 
         if (
             tokensLeft > 0 &&
@@ -306,32 +306,22 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
 
         if (tokensLeft == 0) {
-            _removeMaxFromRestrictedTokenBalance(_token, _from, totalAmount);
-            uint256 amountAfterFreeze = totalAmount;
+            _removeMaxFromRestrictedTokenBalance(_token, _from, _amount);
+            uint256 amountAfterFreeze = _amount;
             if (_withFreeze && _token == XGT_ADDRESS) {
-                amountAfterFreeze = _freeze(_to, totalAmount);
+                amountAfterFreeze = _freeze(_to, _amount);
             }
             if (stakeRevenue[_to]) {
                 _stake(_to, amountAfterFreeze);
             } else {
-                uint256 rest = amountAfterFreeze;
-                if (fees[0] > 0) {
-                    _transferFromToken(_token, _from, feeWallet, fees[0]);
-                    rest = rest.sub(fees[0]);
-                }
-                if (fees[1] > 0) {
-                    _transferFromToken(_token, _from, bridgeFeeWallet, fees[1]);
-                    rest = rest.sub(fees[1]);
-                }
+                _transferFromToken(_token, _from, feeWallet, fees[0]);
+                _transferFromToken(_token, _from, bridgeFeeWallet, fees[1]);
                 current = _to;
-                fees[2] = 0; // reusing fees[2] below (avoids max stack depth issues)
                 while (current != address(0)) {
-                    fees[2] = (_amount.mul(merchantFeeInBP[current])).div(10000);
-                    _transferToken(_token, current, fees[2]);
-                    rest = rest.sub(fees[2]);
+                    _transferToken(_token, current, (_amount.mul(merchantFeeInBP[current])).div(10000));
                     current = merchantParent[current];
                 }
-                _transferToken(_token, _to, rest);
+                _transferToken(_token, _to, leftover);
             }
             // does not include any fees!
             totalCheckoutValue[_token] = totalCheckoutValue[_token].add(_amount);
@@ -340,7 +330,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
 
         return false;
     }
-    
+
     function _freeze(address _to, uint256 _amount)
         internal
         whenNotPaused
