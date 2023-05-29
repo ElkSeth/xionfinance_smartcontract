@@ -257,10 +257,12 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         uint256 _amount
     ) internal whenNotPaused {
         require(address(tokens[_token]) != address(0), "Token must be supported");
-        require(
-            tokens[_token].transferFrom(_sender, _receiver, _amount),
-            "Token transferFrom failed."
-        );
+        if (_amount > 0) {
+            require(
+                tokens[_token].transferFrom(_sender, _receiver, _amount),
+                "Token transferFrom failed."
+            );
+        }
     }
 
     function _transferToken(address _token, address _receiver, uint256 _amount)
@@ -268,7 +270,9 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         whenNotPaused
     {
         require(address(tokens[_token]) != address(0), "Token must be supported");
-        require(tokens[_token].transfer(_receiver, _amount), "Token transfer failed.");
+        if (_amount > 0) {
+            require(tokens[_token].transfer(_receiver, _amount), "Token transfer failed.");
+        }
     }
 
     function payWithToken(
