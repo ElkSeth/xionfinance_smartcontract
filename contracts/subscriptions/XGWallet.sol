@@ -182,14 +182,18 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function depositToken(address _token, uint256 _amount) external {
-        _depositToken(msg.sender, _token, _amount);
+        _depositToken(msg.sender, msg.sender, _token, _amount);
     }
 
     function depositTokenForUser(address _user, address _token, uint256 _amount) external {
-        _depositToken(_user, _token, _amount);
+        _depositToken(_user, _user, _token, _amount);
     }
 
-    function _depositToken(address _user, address _token, uint256 _amount)
+    function depositTokenOnBehalfOfUser(address _user, address _token, uint256 _amount) external {
+        _depositToken(msg.sender, _user, _token, _amount);
+    }
+
+    function _depositToken(address _payer, address _user, address _token, uint256 _amount)
         internal
         whenNotPaused
     {
@@ -198,9 +202,9 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         uint256 fee = (_amount.mul(DEPOSIT_FEE_IN_BP)).div(10000);
         uint256 rest = _amount.sub(fee);
         if (fee > 0) {
-            _transferFromToken(_token, _user, feeWallet, fee);
+            _transferFromToken(_token, _payer, feeWallet, fee);
         }
-        _transferFromToken(_token, _user, address(this), rest);
+        _transferFromToken(_token, _payer, address(this), rest);
         userBalance[_user].balances[_token] = userBalance[_user].balances[_token].add(rest);
     }
 
