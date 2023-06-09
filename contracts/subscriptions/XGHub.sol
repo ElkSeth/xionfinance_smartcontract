@@ -72,6 +72,10 @@ contract XGHub is OwnableUpgradeable, PausableUpgradeable {
         subscriptions.setFeeWallet(_feeWallet);
     }
 
+    function setBridge(address _bridge) external onlyOwner {
+        purchases.setBridge(_bridge);
+    }
+
     function setAuthorizedAddress(address _address, bool _authorized)
         external
         onlyOwner

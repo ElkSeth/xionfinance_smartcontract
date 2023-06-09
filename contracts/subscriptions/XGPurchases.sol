@@ -15,6 +15,7 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
     ICashbackModule public cashback;
     IXGWallet public wallet;
     IXGHub public hub;
+    address public bridge;
 
     struct Purchase {
         address user;
@@ -38,6 +39,19 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
         uint256 tokenPrice
     );
 
+    event ConfirmDepositForPurchase(
+        address user,
+        address merchant,
+        bytes32 purchaseId,
+        bytes32 productId,
+        bytes32 parentProductId,
+        uint256 processID,
+        uint256 price,
+        address tokenAddress,
+        uint256 tokenPayment,
+        uint256 tokenPrice
+    );
+
     function initialize(address _hub) external initializer {
         hub = IXGHub(_hub);
 
@@ -56,6 +70,10 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
 
     function setWallet(address _wallet) external onlyHub {
         wallet = IXGWallet(_wallet);
+    }
+
+    function setBridge(address _bridge) external onlyHub {
+        bridge = _bridge;
     }
 
     function pause() external onlyHub whenNotPaused {
@@ -139,6 +157,21 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
         );
     }
 
+    function confirmDepositForPurchase(
+        address user,
+        address merchant,
+        bytes32 purchaseId,
+        bytes32 productId,
+        bytes32 parentProductId,
+        uint256 processID,
+        uint256 price,
+        address tokenAddress,
+        uint256 tokenPayment,
+        uint256 tokenPrice
+    ) external onlyBridge {
+        emit ConfirmDepositForPurchase(user, merchant, purchaseId, productId, parentProductId, processID, price, tokenAddress, tokenPayment, tokenPrice);
+    }
+
     modifier onlyAuthorized() {
         require(
             hub.getAuthorizationStatus(msg.sender) || msg.sender == owner(),
@@ -149,6 +182,11 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
 
     modifier onlyHub() {
         require(msg.sender == address(hub), "Not authorized");
+        _;
+    }
+
+    modifier onlyBridge() {
+        require(msg.sender == address(bridge), "Not authorized");
         _;
     }
 }
