@@ -50,6 +50,8 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         uint256 merchantStakingDeposits;
     }
 
+    event FeeDeductedForMerchant(address merchant, uint256 amount, address token);
+
     function initialize(
         address _hub,
         address _freezer,
@@ -326,7 +328,9 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
                 _transferFromToken(_token, _from, bridgeFeeWallet, fees[1]);
                 current = _to;
                 while (current != address(0)) {
-                    _transferToken(_token, current, (_amount.mul(merchantFeeInBP[current])).div(10000));
+                    uint256 feeAmount = (_amount.mul(merchantFeeInBP[current])).div(10000);
+                    _transferToken(_token, current, feeAmount);
+                    emit FeeDeductedForMerchant(current, feeAmount, _token);
                     current = merchantParent[current];
                 }
                 _transferToken(_token, _to, leftover);
