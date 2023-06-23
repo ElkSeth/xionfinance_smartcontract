@@ -40,16 +40,9 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
     );
 
     event ConfirmDepositForPurchase(
-        address user,
-        address merchant,
-        bytes32 purchaseId,
-        bytes32 productId,
-        bytes32 parentProductId,
-        uint256 processID,
-        uint256 price,
-        address tokenAddress,
-        uint256 tokenPayment,
-        uint256 tokenPrice
+        uint256 id, 
+        address userDestinationAddress, 
+        uint256 amountUsd
     );
 
     function initialize(address _hub) external initializer {
@@ -158,18 +151,11 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function confirmDepositForPurchase(
-        address user,
-        address merchant,
-        bytes32 purchaseId,
-        bytes32 productId,
-        bytes32 parentProductId,
-        uint256 processID,
-        uint256 price,
-        address tokenAddress,
-        uint256 tokenPayment,
-        uint256 tokenPrice
+        uint256 id, 
+        address userDestinationAddress, 
+        uint256 amountUsd
     ) external onlyBridge {
-        emit ConfirmDepositForPurchase(user, merchant, purchaseId, productId, parentProductId, processID, price, tokenAddress, tokenPayment, tokenPrice);
+        emit ConfirmDepositForPurchase(id, userDestinationAddress, amountUsd);
     }
 
     modifier onlyAuthorized() {
