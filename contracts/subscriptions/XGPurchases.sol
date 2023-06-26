@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 // Baal: check version of openzeppelin
 import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
@@ -123,16 +124,14 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
         require(!purchases[purchaseId].paid, "Already paid");
 
         uint256 currencyUsed = uint256(IXGWallet.Currency.NULL);
-        bool success = wallet.payWithToken(
-            tokenAddress,
-            purchases[purchaseId].user,
-            purchases[purchaseId].merchant,
-            tokenPayment,
-            true,
-            purchaseId
-        );
-
-        require(success, "Payment failed");
+        require(wallet.payWithToken(
+                tokenAddress,
+                purchases[purchaseId].user,
+                purchases[purchaseId].merchant,
+                tokenPayment,
+                true,
+                OperationData(purchaseId, true)
+            ), "Payment failed");
 
         purchases[purchaseId].paid = true;
 
