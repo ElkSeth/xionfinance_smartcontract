@@ -253,7 +253,8 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
             subscriptions[subscriptionId].user,
             subscriptions[subscriptionId].merchant,
             tokenPayment,
-            true
+            true,
+            subscriptionId
         );
 
         require(success, "Payment failed");
@@ -402,22 +403,22 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
         uint256 merchantAmount = (merchantValue.mul(10**18)).div(
             tokenPrice
         );
-        bool successMerchant = wallet.payWithToken(
-            tokenAddress,
-            subscriptions[subscriptionId].user,
-            subscriptions[subscriptionId].merchant,
-            merchantAmount,
-            true
-        );
-        require(successMerchant, "Pause payment to merchant failed.");
-        bool successFee = wallet.payWithToken(
-            tokenAddress,
-            subscriptions[subscriptionId].user,
-            feeWallet,
-            totalTokens.sub(merchantAmount),
-            false
-        );
-        require(successFee, "Pause payment to fee wallet failed.");
+        require(wallet.payWithToken(
+                tokenAddress,
+                subscriptions[subscriptionId].user,
+                subscriptions[subscriptionId].merchant,
+                merchantAmount,
+                true,
+                subscriptionId
+            ), "Pause payment to merchant failed.");
+        require(wallet.payWithToken(
+                tokenAddress,
+                subscriptions[subscriptionId].user,
+                feeWallet,
+                totalTokens.sub(merchantAmount),
+                false,
+                subscriptionId
+            ), "Pause payment to fee wallet failed.");
         emit PauseSubscriptionByCustomer(
             subscriptions[subscriptionId].user,
             subscriptionId,

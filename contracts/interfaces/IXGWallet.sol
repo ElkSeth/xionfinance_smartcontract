@@ -13,7 +13,8 @@ interface IXGWallet {
         address _from,
         address _to,
         uint256 _amount,
-        bool _withFreeze
+        bool _withFreeze,
+        bytes32 _operationId
     ) external returns (bool);
 
     function getUserTokenBalance(address _token, address _user) external view returns (uint256);

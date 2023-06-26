@@ -128,7 +128,8 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
             purchases[purchaseId].user,
             purchases[purchaseId].merchant,
             tokenPayment,
-            true
+            true,
+            purchaseId
         );
 
         require(success, "Payment failed");
