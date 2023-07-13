@@ -327,8 +327,8 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
             if (stakeRevenue[_to]) {
                 _stake(_to, amountAfterFreeze);
             } else {
-                _transferFromToken(_token, _from, feeWallet, fees[0]);
-                _transferFromToken(_token, _from, bridgeFeeWallet, fees[1]);
+                _transferToken(_token, feeWallet, fees[0]);
+                _transferToken(_token, bridgeFeeWallet, fees[1]);
                 current = _to;
                 while (current != address(0)) {
                     uint256 feeAmount = (_amount.mul(merchantFeeInBP[current])).div(10000);
