@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.7.6;
-pragma abicoder v2;
 
 // Baal: check version of openzeppelin
 import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
@@ -130,7 +129,7 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
                 purchases[purchaseId].merchant,
                 tokenPayment,
                 true,
-                OperationData(purchaseId, true)
+                purchaseId
             ), "Payment failed");
 
         purchases[purchaseId].paid = true;

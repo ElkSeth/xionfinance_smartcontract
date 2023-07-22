@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.7.6;
-pragma abicoder v2;
 
 // Baal: check version of openzeppelin
 import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
@@ -255,7 +254,7 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
                 subscriptions[subscriptionId].merchant,
                 tokenPayment,
                 true,
-                OperationData(subscriptionId, false)
+                subscriptionId
             ), "Payment failed");
 
         subscriptions[subscriptionId].status = Status.ACTIVE;
@@ -414,7 +413,7 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
                 subscriptions[subscriptionId].merchant,
                 merchantAmount,
                 true,
-                OperationData(subscriptionId, false)
+                subscriptionId
             ), "Pause payment to merchant failed.");
         require(wallet.payWithToken(
                 tokenAddress,
@@ -422,7 +421,7 @@ contract XGSubscriptions is OwnableUpgradeable, PausableUpgradeable {
                 feeWallet,
                 totalTokens.sub(merchantAmount),
                 false,
-                OperationData(subscriptionId, false)
+                subscriptionId
             ), "Pause payment to fee wallet failed.");
         emit PauseSubscriptionByCustomer(
             subscriptions[subscriptionId].user,

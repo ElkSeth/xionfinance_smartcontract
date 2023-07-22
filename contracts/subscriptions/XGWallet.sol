@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.7.6;
-pragma abicoder v2;
 
 // Baal: check version of openzeppelin
 import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
@@ -9,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable@3.4.0/utils/PausableUpgradeable.sol"
 import "../interfaces/IXGTFreezer.sol";
 import "../interfaces/IXGHub.sol";
 import "../interfaces/IStakingModule.sol";
-import "./OperationData.sol";
 
 import "@openzeppelin/contracts@3.4.0/token/ERC20/IERC20.sol";
 
@@ -52,7 +50,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         uint256 merchantStakingDeposits;
     }
 
-    event FeeDeductedForMerchant(address merchant, uint256 amount, address token, bytes32 operationId, bool isSingleBilling);
+    event FeeDeductedForMerchant(address merchant, uint256 amount, address token, bytes32 operationId);
 
     function initialize(
         address _hub,
@@ -289,7 +287,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         address _to,
         uint256 _amount,
         bool _withFreeze,
-        OperationData memory _operationData
+        bytes32 _operationId
     ) external onlyModule returns (bool) {
         require(address(tokens[_token]) != address(0), "Token must be supported");
         if (_amount == 0) {
@@ -333,7 +331,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
                 while (current != address(0)) {
                     uint256 feeAmount = (_amount.mul(merchantFeeInBP[current])).div(10000);
                     _transferToken(_token, current, feeAmount);
-                    emit FeeDeductedForMerchant(current, feeAmount, _token, _operationData.operationId, _operationData.isSingleBilling);
+                    emit FeeDeductedForMerchant(current, feeAmount, _token, _operationId);
                     current = merchantParent[current];
                 }
                 _transferToken(_token, _to, leftover);
