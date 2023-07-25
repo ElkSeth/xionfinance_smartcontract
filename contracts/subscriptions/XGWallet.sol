@@ -23,7 +23,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     IStakingModule public staking;
     address public subscriptions;
     address public feeWallet;
-    address public bridgeFeeWallet;
+    mapping (address => bool) public bridgeFeeWallet;
     IXGHub public hub;
     address public purchases;
 
@@ -158,8 +158,8 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         feeWallet = _feeWallet;
     }
 
-    function setBridgeFeeWallet(address _bridgeFeeWallet) external onlyOwner {
-        bridgeFeeWallet = _bridgeFeeWallet;
+    function setBridgeFeeWallet(address _bridgeAddress, bool active) external onlyOwner {
+        bridgeFeeWallet[_bridgeAddress] = active;
     }
 
     function toggleStakeRevenue(bool _stakeRevenue) external {
@@ -286,17 +286,20 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         address _from,
         address _to,
         uint256 _amount,
-        bool _withFreeze,
+        address _bridgeWallet,
         bytes32 _operationId
     ) external onlyModule returns (bool) {
         require(address(tokens[_token]) != address(0), "Token must be supported");
+        require(_bridgeWallet == address(0) || bridgeFeeWallet[_bridgeWallet], "Bridge must be supported");
         if (_amount == 0) {
             return true;
         }
         uint256[3] memory fees; // xionFee, bridgeFee, merchantFees
 
         fees[0] = (_amount.mul(PAYMENT_FEE_IN_BP)).div(10000);
-        fees[1] = (_amount.mul(BRIDGE_FEE_IN_BP)).div(10000);
+        if (_bridgeWallet != address(0)) {
+            fees[1] = (_amount.mul(BRIDGE_FEE_IN_BP)).div(10000);
+        }
 
         address current = _to;
         while (current != address(0)) {
@@ -319,14 +322,11 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         if (tokensLeft == 0) {
             _removeMaxFromRestrictedTokenBalance(_token, _from, _amount);
             uint256 amountAfterFreeze = _amount;
-            if (_withFreeze && _token == XGT_ADDRESS) {
-                amountAfterFreeze = _freeze(_to, _amount);
-            }
             if (stakeRevenue[_to]) {
                 _stake(_to, amountAfterFreeze);
             } else {
                 _transferToken(_token, feeWallet, fees[0]);
-                _transferToken(_token, bridgeFeeWallet, fees[1]);
+                _transferToken(_token, _bridgeWallet, fees[1]);
                 current = _to;
                 while (current != address(0)) {
                     uint256 feeAmount = (_amount.mul(merchantFeeInBP[current])).div(10000);

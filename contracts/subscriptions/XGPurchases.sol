@@ -87,7 +87,8 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
         uint256 price,
         address tokenAddress,
         uint256 tokenPayment,
-        uint256 tokenPrice
+        uint256 tokenPrice,
+        address bridgeWallet
     ) public onlyAuthorized whenNotPaused {
         purchases[purchaseId] = Purchase(
             user,
@@ -103,7 +104,8 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
             processID,
             tokenAddress,
             tokenPayment,
-            tokenPrice
+            tokenPrice,
+            bridgeWallet
         );
     }
 
@@ -112,7 +114,8 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
         uint256 processID,
         address tokenAddress,
         uint256 tokenPayment,
-        uint256 tokenPrice
+        uint256 tokenPrice,
+        address bridgeWallet
     ) public onlyAuthorized whenNotPaused {
         uint256 tokenPaymentValue = (tokenPayment.mul(tokenPrice)).div(10**18);
         require(
@@ -128,7 +131,7 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
                 purchases[purchaseId].user,
                 purchases[purchaseId].merchant,
                 tokenPayment,
-                true,
+                bridgeWallet,
                 purchaseId
             ), "Payment failed");
 

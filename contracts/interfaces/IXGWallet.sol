@@ -13,7 +13,7 @@ interface IXGWallet {
         address _from,
         address _to,
         uint256 _amount,
-        bool _withFreeze,
+        address _bridgeWallet,
         bytes32 _operationId
     ) external returns (bool);
 
