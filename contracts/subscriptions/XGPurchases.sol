@@ -15,7 +15,7 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
     ICashbackModule public cashback;
     IXGWallet public wallet;
     IXGHub public hub;
-    address public bridge;
+    mapping (address => bool) public bridges;
 
     struct Purchase {
         address user;
@@ -65,8 +65,8 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
         wallet = IXGWallet(_wallet);
     }
 
-    function setBridge(address _bridge) external onlyHub {
-        bridge = _bridge;
+    function setBridge(address _bridge, bool _active) external onlyHub {
+        bridges[_bridge] = _active;
     }
 
     function pause() external onlyHub whenNotPaused {
@@ -174,7 +174,7 @@ contract XGPurchases is OwnableUpgradeable, PausableUpgradeable {
     }
 
     modifier onlyBridge() {
-        require(msg.sender == address(bridge), "Not authorized");
+        require(bridges[msg.sender], "Not authorized");
         _;
     }
 }
