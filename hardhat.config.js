@@ -7,50 +7,62 @@
  require("hardhat-gas-reporter");
  require('hardhat-contract-sizer');
 
- const {privateKey, infuraKey} = require('./.secrets.json');
+ const {privateKey, apiKey} = require('./.secrets.json');
 
  module.exports = {
-   networks: {
-     hardhat: {},
-     xdai: {
-       url: "https://xdai-archive.blockscout.com",
-       accounts: [privateKey],
-       gasPrice: "auto",
-       gas: "auto"
-     },
-     sokol: {
-       url: "https://sokol.poa.network",
-       accounts: [privateKey],
-       gasPrice: 5000000000,
-       gas: "auto"
-     },
-     goerli: {
-       url: "https://goerli.infura.io/v3/" + infuraKey,
-       accounts: [privateKey],
-       gasPrice: 1000000000,
-       gas: "auto"
-     },
-     bsc: {
-       url: "https://bsc-dataseed1.defibit.io",
-       accounts: [privateKey],
-       gasPrice: 5000000000,
-       gas: "auto"
-     },
-     eth: {
-       url: "https://mainnet.infura.io/v3/" + infuraKey,
-       accounts: [privateKey],
-       gasPrice: 37000000000,
-       gas: "auto"
-     }
-   },
-   solidity: "0.7.6",
-   gasReporter: {
-     enabled: true
-   },
-   settings: {
-     optimizer: {
-       enabled: true,
-       runs: 200,
-     },
-   },
+  networks: {
+    hardhat: {
+      forking: {
+        url: "https://polygon-rpc.com",
+      },
+    },
+    polygon: {
+      url: "https://polygon-rpc.com",
+      accounts: [privateKey]
+    },
+    mumbai: {
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts: [privateKey],
+      gasPrice: "auto",
+      gas: "auto"
+    },
+    fuji: {
+      url: "https://avalanche-fuji.rpc.thirdweb.com",
+      accounts: [privateKey],
+      gasPrice: "auto",
+      gas: "auto"
+    },
+    avax: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      accounts: [privateKey]
+    },
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      accounts: [privateKey],
+      timeout: 100_000
+    }
+  },
+  etherscan: {
+    apiKey: {polygon: apiKey},
+    customChains: [
+      {
+        network: "polygon",
+        chainId: 137,
+        urls: {
+          apiURL: "https://api.polygonscan.com/",
+          browserURL: "https://polygonscan.com/"
+        }
+      }
+    ]
+  },
+  solidity: "0.7.6",
+  gasReporter: {
+    enabled: true
+  },
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 200,
+    },
+  },
  };

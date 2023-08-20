@@ -2,20 +2,20 @@
 pragma solidity 0.7.6;
 
 // Baal: check version of openzeppelin
-import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable@3.4.0/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable@3.4.0/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "../interfaces/IXGTFreezer.sol";
 import "../interfaces/IXGHub.sol";
 import "../interfaces/IStakingModule.sol";
 
-import "@openzeppelin/contracts@3.4.0/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     using SafeMathUpgradeable for uint256;
 
-    address public XGT_ADDRESS = 0xC25AF3123d2420054c8fcd144c21113aa2853F39;
-    IERC20 public xgt = IERC20(XGT_ADDRESS);
+    address public XGT_ADDRESS;
+    IERC20 public xgt;
 
     address[] public tokenAddresses;
     mapping (address => IERC20) public tokens;
@@ -55,8 +55,11 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     function initialize(
         address _hub,
         address _freezer,
-        address[] calldata _tokens
+        address[] calldata _tokens,
+        address _xgt
     ) external initializer {
+        XGT_ADDRESS = _xgt;
+        xgt = IERC20(XGT_ADDRESS);
         hub = IXGHub(_hub);
         freezer = IXGTFreezer(_freezer);
         for (uint256 i; i < _tokens.length; ++i) {

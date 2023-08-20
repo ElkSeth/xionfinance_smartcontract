@@ -1,0 +1,42 @@
+const { ethers, upgrades, run } = require("hardhat");
+
+async function deploy() {
+
+    // change before deployment
+    const xgtAddr = "0x7a9e5D43c70e9531c85b342A2Ae2dd4933D71221"
+    //
+
+    const [deployer] = await ethers.getSigners()
+
+    const startingBal = await deployer.getBalance()
+
+    console.log("Deploying XGHUB with the account:", deployer.address);
+    console.log("Address for XGT-V3:", xgtAddr);
+    console.log("Account balance:", (startingBal / 1e18).toString());
+
+    const XGHubFactory = await ethers.getContractFactory('XGHub')
+    const XGHubProxy = await upgrades.deployProxy(XGHubFactory, [deployer.address, xgtAddr])
+    await XGHubProxy.deployed();
+
+    let hubImp = await upgrades.erc1967.getImplementationAddress(XGHubProxy.address)
+    console.log("Implementation at: ", hubImp)
+
+    await new Promise(r => setTimeout(r, 5000));
+
+    // uncomment if API Key is set and you would like to verify the contracts on polygonscan.
+
+    await run(`verify:verify`, {
+      address: hubImp,
+      constructorArguments: [],
+    });
+
+    console.log("Deployed XGHub to: ", XGHubProxy.address)
+    
+}
+
+deploy()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
