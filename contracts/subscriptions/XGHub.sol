@@ -2,10 +2,10 @@
 pragma solidity 0.7.6;
 
 // Baal: check version of openzeppelin
-import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable@3.4.0/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable@3.4.0/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts@3.4.0/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/ICashbackModule.sol";
 import "../interfaces/IXGTFreezer.sol";
 import "../interfaces/IXGWallet.sol";

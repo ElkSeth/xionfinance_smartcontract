@@ -2,9 +2,9 @@
 pragma solidity 0.7.6;
 
 // Baal: check version of openzeppelin
-import "@openzeppelin/contracts-upgradeable@3.4.0/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable@3.4.0/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable@3.4.0/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "../interfaces/IXGWallet.sol";
 import "../interfaces/IXGHub.sol";
 import "../interfaces/IDateTime.sol";

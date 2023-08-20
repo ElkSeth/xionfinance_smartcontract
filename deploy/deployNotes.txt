@@ -1,0 +1,19 @@
+!! XGWallet was not proxy safe since some of the storage variables were hardcoded values. I moved xgt and xgtAddress to be set when initialize is called.
+
+Setup: 
+    Requires polygonscan.com API Key in order to use verification feature when deploying.
+    Secret Key for deployer account and polygonscan API Key go in .secret.json file.
+
+XGHub:
+    Change XGT_ADDRESS variable if the address is not correct.
+        - This is true for all of the deployment scripts.
+XGWallet/XGSubscriptions/XGPurchases/XGFeatureRegistry:
+    Change XGHubProxy variable to correct address before deploying.
+InitXGHub
+    Change list of contract addresses before deploying.
+
+Order:
+    XGHub > XGWallet > XGSubscriptions > XGPurchases > XGFeatureRegistry
+
+Command:
+    ex. npx hardhat run ./deploy/deploy-XGHub.js --network polygon
