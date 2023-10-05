@@ -20,12 +20,30 @@ async function deploy() {
     const XGTFreezer = await XGTF.deploy(XGT_ADDRESS)
     await XGTFreezer.deployed();
 
-    await new Promise(r => setTimeout(r, 5000));
+    let retry = 0
+    while (retry < 5) {
+        try {
 
-    // await run(`verify:verify`, {
-    //   address: XGTFreezer.address,
-    //   constructorArguments: [xgtAddr],
-    // });
+            await run(`verify:verify`, {
+              address: XGTFreezer.address,
+              constructorArguments: [],
+            });
+
+            break
+
+         } catch (e) {
+            console.log(e.message)
+            console.log("Retrying...")
+            retry++
+
+            await new Promise(r => setTimeout(r, 5000));
+
+            if (retry == 5) {
+              console.log("Unable to verify contracts.")
+            }
+
+         }
+    }
 
     console.log("Deployed XGT Freezer to: ", XGTFreezer.address)
 
@@ -33,15 +51,33 @@ async function deploy() {
     const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS])
     await XGWalletProxy.deployed()
 
-    let walImp = await upgrades.erc1967.getImplementationAddress(XGWalletProxy.address)
-    console.log("Implementation at: ", walImp)
+    retry = 0
+    while (retry < 5) {
+        try {
 
-    await new Promise(r => setTimeout(r, 5000));
+          let walImp = await upgrades.erc1967.getImplementationAddress(XGWalletProxy.address)
+          console.log("Implementation at: ", walImp)
 
-    // await run(`verify:verify`, {
-    //   address: walImp,
-    //   constructorArguments: [],
-    // });
+            await run(`verify:verify`, {
+              address: walImp,
+              constructorArguments: [],
+            });
+
+            break
+
+         } catch (e) {
+            console.log(e.message)
+            console.log("Retrying...")
+            retry++
+
+            await new Promise(r => setTimeout(r, 5000));
+
+            if (retry == 5) {
+              console.log("Unable to verify contracts.")
+            }
+
+         }
+    }
     
     console.log("Deployed XGWallet to: ", XGWalletProxy.address)
     

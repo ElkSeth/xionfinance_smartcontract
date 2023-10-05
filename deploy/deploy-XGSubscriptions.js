@@ -19,28 +19,39 @@ async function deploy() {
     const DateTime = await DT.deploy()
     await DateTime.deployed()
 
-    await new Promise(r => setTimeout(r, 10000));
-
-    // await run(`verify:verify`, {
-    //   address: DateTime.address,
-    //   constructorArguments: [],
-    // });
-
     console.log("Deployed DateTime to: ", DateTime.address)
 
     const XGS = await ethers.getContractFactory('XGSubscriptions')
     const XGSubscriptionsProxy = await upgrades.deployProxy(XGS, [XGHUB_PROXY_ADDRESS, DateTime.address])
     await XGSubscriptionsProxy.deployed()
 
-    let subImp = await upgrades.erc1967.getImplementationAddress(XGSubscriptionsProxy.address)
-    console.log("Implementation at: ", subImp)
+    let retry = 0
+    while (retry < 5) {
+        try {
 
-    await new Promise(r => setTimeout(r, 5000));
+            let subImp = await upgrades.erc1967.getImplementationAddress(XGSubscriptionsProxy.address)
+            console.log("Implementation at: ", subImp)
 
-    // await run(`verify:verify`, {
-    //   address: subImp,
-    //   constructorArguments: [],
-    // });
+            await run(`verify:verify`, {
+              address: subImp,
+              constructorArguments: [],
+            });
+
+            break
+
+         } catch (e) {
+            console.log(e.message)
+            console.log("Retrying...")
+            retry++
+
+            await new Promise(r => setTimeout(r, 5000));
+
+            if (retry == 5) {
+              console.log("Unable to verify contracts.")
+            }
+
+         }
+    }
 
     console.log("Deployed XGSubscriptions to: ", XGSubscriptionsProxy.address)
     

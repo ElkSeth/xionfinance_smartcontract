@@ -6,6 +6,7 @@
  require('@openzeppelin/hardhat-upgrades');
  require("hardhat-gas-reporter");
  require('hardhat-contract-sizer');
+ require('@nomiclabs/hardhat-etherscan')
 
  const {privateKey, apiKey} = require('./.secrets.json');
 
@@ -43,17 +44,7 @@
     }
   },
   etherscan: {
-    apiKey: {polygon: apiKey},
-    customChains: [
-      {
-        network: "polygon",
-        chainId: 137,
-        urls: {
-          apiURL: "https://api.polygonscan.com/",
-          browserURL: "https://polygonscan.com/"
-        }
-      }
-    ]
+    apiKey: {polygon: apiKey}
   },
   solidity: "0.7.6",
   gasReporter: {

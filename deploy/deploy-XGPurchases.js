@@ -19,16 +19,35 @@ async function deploy() {
     const XGPurchasesProxy = await upgrades.deployProxy(XGP, [XGHUB_PROXY_ADDRESS])
     await XGPurchasesProxy.deployed()
 
-    let purImp = await upgrades.erc1967.getImplementationAddress(XGPurchasesProxy.address)
-    console.log("Implementation at: ", purImp)
+    let retry = 0
+    while (retry < 5) {
+        try {
 
-    await new Promise(r => setTimeout(r, 5000));
+            let purImp = await upgrades.erc1967.getImplementationAddress(XGPurchasesProxy.address)
+            console.log("Implementation at: ", purImp)
 
-    // await run(`verify:verify`, {
-    //   address: purImp,
-    //   constructorArguments: [],
-    // });
+            await run(`verify:verify`, {
+              address: purImp,
+              constructorArguments: [],
+            });
 
+            break
+
+         } catch (e) {
+            console.log(e.message)
+            console.log("Retrying...")
+            retry++
+
+            await new Promise(r => setTimeout(r, 5000));
+
+            if (retry == 5) {
+              console.log("Unable to verify contracts.")
+            }
+
+         }
+    }
+
+    
     console.log("Deployed XGPurchases to: ", XGPurchasesProxy.address)
     
 }
