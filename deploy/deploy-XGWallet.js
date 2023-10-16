@@ -26,7 +26,7 @@ async function deploy() {
 
             await run(`verify:verify`, {
               address: XGTFreezer.address,
-              constructorArguments: [],
+              constructorArguments: [XGT_ADDRESS],
             });
 
             break
@@ -51,7 +51,7 @@ async function deploy() {
     gasPrice = parseInt(gasPrice * 1.2)
 
     const XGW = await ethers.getContractFactory('XGWallet')
-    const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS], {gasPrice: gasPrice})
+    const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS])
     await XGWalletProxy.deployed()
 
     retry = 0

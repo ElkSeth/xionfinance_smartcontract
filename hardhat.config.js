@@ -11,6 +11,21 @@
  const {privateKey, apiKey} = require('./.secrets.json');
 
  module.exports = {
+
+  solidity: {
+    version: "0.7.6",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
+
+  gasReporter: {
+    enabled: true
+  },
+
   networks: {
     hardhat: {
       forking: {
@@ -19,7 +34,9 @@
     },
     polygon: {
       url: "https://polygon-rpc.com",
-      accounts: [privateKey]
+      accounts: [privateKey],
+      gasPrice: 85000000000,
+      timeout: 100_000
     },
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com/",
@@ -43,17 +60,16 @@
       timeout: 100_000
     }
   },
+
   etherscan: {
     apiKey: {polygon: apiKey}
   },
-  solidity: "0.7.6",
-  gasReporter: {
-    enabled: true
-  },
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 200,
-    },
-  },
+  
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+    only: [],
+  }
  };

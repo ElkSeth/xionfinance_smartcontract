@@ -16,9 +16,9 @@ async function deploy() {
 
     let gasPrice = await ethers.provider.getGasPrice()
     gasPrice = parseInt(gasPrice * 1.2)
-    
+
     const XGHubFactory = await ethers.getContractFactory('XGHub')
-    const XGHubProxy = await upgrades.deployProxy(XGHubFactory, [deployer.address, xgtAddr], {gasPrice: gasPrice})
+    const XGHubProxy = await upgrades.deployProxy(XGHubFactory, [deployer.address, xgtAddr])
     await XGHubProxy.deployed();
 
     let retry = 0
