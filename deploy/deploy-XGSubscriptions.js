@@ -21,8 +21,11 @@ async function deploy() {
 
     console.log("Deployed DateTime to: ", DateTime.address)
 
+    let gasPrice = await ethers.provider.getGasPrice()
+    gasPrice = parseInt(gasPrice * 1.2)
+
     const XGS = await ethers.getContractFactory('XGSubscriptions')
-    const XGSubscriptionsProxy = await upgrades.deployProxy(XGS, [XGHUB_PROXY_ADDRESS, DateTime.address])
+    const XGSubscriptionsProxy = await upgrades.deployProxy(XGS, [XGHUB_PROXY_ADDRESS, DateTime.address], {gasPrice: gasPrice})
     await XGSubscriptionsProxy.deployed()
 
     let retry = 0

@@ -14,8 +14,11 @@ async function deploy() {
     console.log("Address for XGT-V3:", xgtAddr);
     console.log("Account balance:", (startingBal / 1e18).toString());
 
+    let gasPrice = await ethers.provider.getGasPrice()
+    gasPrice = parseInt(gasPrice * 1.2)
+    
     const XGHubFactory = await ethers.getContractFactory('XGHub')
-    const XGHubProxy = await upgrades.deployProxy(XGHubFactory, [deployer.address, xgtAddr])
+    const XGHubProxy = await upgrades.deployProxy(XGHubFactory, [deployer.address, xgtAddr], {gasPrice: gasPrice})
     await XGHubProxy.deployed();
 
     let retry = 0

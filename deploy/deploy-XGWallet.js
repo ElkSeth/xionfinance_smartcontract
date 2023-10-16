@@ -47,8 +47,11 @@ async function deploy() {
 
     console.log("Deployed XGT Freezer to: ", XGTFreezer.address)
 
+    let gasPrice = await ethers.provider.getGasPrice()
+    gasPrice = parseInt(gasPrice * 1.2)
+
     const XGW = await ethers.getContractFactory('XGWallet')
-    const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS])
+    const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS], {gasPrice: gasPrice})
     await XGWalletProxy.deployed()
 
     retry = 0
