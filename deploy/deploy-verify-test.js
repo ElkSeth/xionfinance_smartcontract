@@ -4,7 +4,7 @@ const { ethers, upgrades, run } = require("hardhat");
 async function deploy() {
 
     // change before deployment
-    const xgtAddr = "0x7a9e5D43c70e9531c85b342A2Ae2dd4933D71221"
+    const xgtAddr = "0x9EB8A789Ed1Bd38D281962b523349d5D17A37d47"
     //
 
     const [deployer] = await ethers.getSigners()

@@ -35,7 +35,7 @@
     polygon: {
       url: "https://polygon-rpc.com",
       accounts: [privateKey],
-      gasPrice: 85000000000,
+      gasPrice: 120000000000,
       timeout: 100_000
     },
     mumbai: {

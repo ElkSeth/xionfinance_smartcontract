@@ -3,9 +3,9 @@ const { ethers, upgrades, run } = require("hardhat");
 async function deploy() {
 
     // change before deployment
-    const XGT_ADDRESS = "0x7a9e5D43c70e9531c85b342A2Ae2dd4933D71221"
-    const XGHUB_PROXY_ADDRESS = "0xeA72cA1240C822a6a0B71f22D00aBa96CBbF8034"
-    const XGWalletTokens = [""]
+    const XGT_ADDRESS = "0x9EB8A789Ed1Bd38D281962b523349d5D17A37d47"
+    const XGHUB_PROXY_ADDRESS = "0x638988b3D33e0c7E68CF801787a8C37D063431c2"
+    const XGWalletTokens = ["0xc2132D05D31c914a87C6611C10748AEb04B58e8F"]
     //
 
     const [deployer] = await ethers.getSigners()
