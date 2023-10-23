@@ -22,33 +22,36 @@ async function deploy() {
     const XGFeatureRegistryProxy = await upgrades.deployProxy(XGF, [XGHUB_PROXY_ADDRESS])
     await XGFeatureRegistryProxy.deployed()
 
-    let retry = 0
-    while (retry < 5) {
-        try {
+    let frImp = await upgrades.erc1967.getImplementationAddress(XGFeatureRegistryProxy.address)
+    console.log("Implementation at: ", frImp)
 
-            let frImp = await upgrades.erc1967.getImplementationAddress(XGFeatureRegistryProxy.address)
-            console.log("Implementation at: ", frImp)
+    // let retry = 0
+    // while (retry < 5) {
+    //     try {
 
-            await run(`verify:verify`, {
-              address: frImp,
-              constructorArguments: [],
-            });
+    //         let frImp = await upgrades.erc1967.getImplementationAddress(XGFeatureRegistryProxy.address)
+    //         console.log("Implementation at: ", frImp)
 
-            break
+    //         await run(`verify:verify`, {
+    //           address: frImp,
+    //           constructorArguments: [],
+    //         });
 
-         } catch (e) {
-            console.log(e.message)
-            console.log("Retrying...")
-            retry++
+    //         break
 
-            await new Promise(r => setTimeout(r, 5000));
+    //      } catch (e) {
+    //         console.log(e.message)
+    //         console.log("Retrying...")
+    //         retry++
 
-            if (retry == 5) {
-              console.log("Unable to verify contracts.")
-            }
+    //         await new Promise(r => setTimeout(r, 5000));
 
-         }
-    }
+    //         if (retry == 5) {
+    //           console.log("Unable to verify contracts.")
+    //         }
+
+    //      }
+    // }
 
     console.log("Deployed XGFeatureRegistry to: ", XGFeatureRegistryProxy.address)
     

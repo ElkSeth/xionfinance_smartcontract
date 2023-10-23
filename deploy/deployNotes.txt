@@ -17,3 +17,4 @@ Order:
 
 Command:
     ex. npx hardhat run ./deploy/deploy-XGHub.js --network polygon
+        npx hardhat verify --network polygon <address> 

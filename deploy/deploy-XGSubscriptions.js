@@ -28,33 +28,36 @@ async function deploy() {
     const XGSubscriptionsProxy = await upgrades.deployProxy(XGS, [XGHUB_PROXY_ADDRESS, DateTime.address])
     await XGSubscriptionsProxy.deployed()
 
-    let retry = 0
-    while (retry < 5) {
-        try {
+    let subImp = await upgrades.erc1967.getImplementationAddress(XGSubscriptionsProxy.address)
+    console.log("Implementation at: ", subImp)
 
-            let subImp = await upgrades.erc1967.getImplementationAddress(XGSubscriptionsProxy.address)
-            console.log("Implementation at: ", subImp)
+    // let retry = 0
+    // while (retry < 5) {
+    //     try {
 
-            await run(`verify:verify`, {
-              address: subImp,
-              constructorArguments: [],
-            });
+    //         let subImp = await upgrades.erc1967.getImplementationAddress(XGSubscriptionsProxy.address)
+    //         console.log("Implementation at: ", subImp)
 
-            break
+    //         await run(`verify:verify`, {
+    //           address: subImp,
+    //           constructorArguments: [],
+    //         });
 
-         } catch (e) {
-            console.log(e.message)
-            console.log("Retrying...")
-            retry++
+    //         break
 
-            await new Promise(r => setTimeout(r, 5000));
+    //      } catch (e) {
+    //         console.log(e.message)
+    //         console.log("Retrying...")
+    //         retry++
 
-            if (retry == 5) {
-              console.log("Unable to verify contracts.")
-            }
+    //         await new Promise(r => setTimeout(r, 5000));
 
-         }
-    }
+    //         if (retry == 5) {
+    //           console.log("Unable to verify contracts.")
+    //         }
+
+    //      }
+    // }
 
     console.log("Deployed XGSubscriptions to: ", XGSubscriptionsProxy.address)
     

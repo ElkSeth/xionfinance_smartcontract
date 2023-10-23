@@ -54,33 +54,36 @@ async function deploy() {
     const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS])
     await XGWalletProxy.deployed()
 
-    retry = 0
-    while (retry < 5) {
-        try {
+    let walImp = await upgrades.erc1967.getImplementationAddress(XGWalletProxy.address)
+    console.log("Implementation at: ", walImp)
 
-          let walImp = await upgrades.erc1967.getImplementationAddress(XGWalletProxy.address)
-          console.log("Implementation at: ", walImp)
+    // retry = 0
+    // while (retry < 5) {
+    //     try {
 
-            await run(`verify:verify`, {
-              address: walImp,
-              constructorArguments: [],
-            });
+    //       let walImp = await upgrades.erc1967.getImplementationAddress(XGWalletProxy.address)
+    //       console.log("Implementation at: ", walImp)
 
-            break
+    //         await run(`verify:verify`, {
+    //           address: walImp,
+    //           constructorArguments: [],
+    //         });
 
-         } catch (e) {
-            console.log(e.message)
-            console.log("Retrying...")
-            retry++
+    //         break
 
-            await new Promise(r => setTimeout(r, 5000));
+    //      } catch (e) {
+    //         console.log(e.message)
+    //         console.log("Retrying...")
+    //         retry++
 
-            if (retry == 5) {
-              console.log("Unable to verify contracts.")
-            }
+    //         await new Promise(r => setTimeout(r, 5000));
 
-         }
-    }
+    //         if (retry == 5) {
+    //           console.log("Unable to verify contracts.")
+    //         }
+
+    //      }
+    // }
     
     console.log("Deployed XGWallet to: ", XGWalletProxy.address)
     

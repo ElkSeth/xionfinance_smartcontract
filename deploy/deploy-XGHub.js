@@ -21,33 +21,36 @@ async function deploy() {
     const XGHubProxy = await upgrades.deployProxy(XGHubFactory, [deployer.address, xgtAddr])
     await XGHubProxy.deployed();
 
-    let retry = 0
-    while (retry < 5) {
-        try {
+    let hubImp = await upgrades.erc1967.getImplementationAddress(XGHubProxy.address)
+    console.log("Implementation at: ", hubImp)
 
-            let hubImp = await upgrades.erc1967.getImplementationAddress(XGHubProxy.address)
-            console.log("Implementation at: ", hubImp)
+    // let retry = 0
+    // while (retry < 5) {
+    //     try {
 
-            await run(`verify:verify`, {
-              address: hubImp,
-              constructorArguments: [],
-            });
+    //         let hubImp = await upgrades.erc1967.getImplementationAddress(XGHubProxy.address)
+    //         console.log("Implementation at: ", hubImp)
 
-            break
+    //         await run(`verify:verify`, {
+    //           address: hubImp,
+    //           constructorArguments: [],
+    //         });
 
-         } catch (e) {
-            console.log(e.message)
-            console.log("Retrying...")
-            retry++
+    //         break
 
-            await new Promise(r => setTimeout(r, 5000));
+    //      } catch (e) {
+    //         console.log(e.message)
+    //         console.log("Retrying...")
+    //         retry++
 
-            if (retry == 5) {
-              console.log("Unable to verify contracts.")
-            }
+    //         await new Promise(r => setTimeout(r, 5000));
 
-         }
-    }
+    //         if (retry == 5) {
+    //           console.log("Unable to verify contracts.")
+    //         }
+
+    //      }
+    // }
 
     console.log("Deployed XGHub to: ", XGHubProxy.address)
     
