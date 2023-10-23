@@ -23,19 +23,24 @@ async function deploy() {
 
     console.log("Initializing XGHub...")
 
-    await XGHubProxy.setFeaturesAddress(XGFeatureRegistryProxy)
+    let tx = await XGHubProxy.setFeaturesAddress(XGFeatureRegistryProxy)
+     
     console.log("Set features address: ", XGFeatureRegistryProxy)
 
-    await XGHubProxy.setWalletAddress(XGWalletProxy)
+    tx = await XGHubProxy.setWalletAddress(XGWalletProxy)
+    await tx.wait()
     console.log("Set wallet address: ", XGWalletProxy)
 
-    await XGHubProxy.setPurchasesModule(XGPurchasesProxy)
+    tx = await XGHubProxy.setPurchasesModule(XGPurchasesProxy)
+    await tx.wait()
     console.log("Set purchases address: ", XGPurchasesProxy)
 
-    await XGHubProxy.setSubscriptionsModule(XGSubscriptionsProxy)
+    tx = await XGHubProxy.setSubscriptionsModule(XGSubscriptionsProxy)
+    await tx.wait()
     console.log("Set subscriptions address: ", XGSubscriptionsProxy)
 
-    await XGHubProxy.setFeeWallet(FeeWalletAddress)
+    tx = await XGHubProxy.setFeeWallet(FeeWalletAddress)
+    await tx.wait()
     console.log("Set fee wallet address: ", FeeWalletAddress)
 
     console.log("Finished Initializing XGHub.")
