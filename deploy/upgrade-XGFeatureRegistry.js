@@ -2,30 +2,30 @@ const { ethers, upgrades, run } = require("hardhat");
 
 async function deploy() {
 
-    // change before deployment
-    const XGT_ADDRESS = "0x9EB8A789Ed1Bd38D281962b523349d5D17A37d47"
-    const XGHUB_PROXY_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
-    //
-
     const [deployer] = await ethers.getSigners()
 
     const startingBal = await deployer.getBalance()
 
     console.log("Deploying XGFeatureRegistry with the account:", deployer.address);
-    console.log("Address for XGT-V3:", XGT_ADDRESS);
     console.log("Account balance:", (startingBal / 1e18).toString());
 
     let gasPrice = await ethers.provider.getGasPrice()
     gasPrice = parseInt(gasPrice * 1.2)
 
+    // Address of the deployed proxy
+    const proxyAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"; // Replace with your existing proxy address
+
     const XGF = await ethers.getContractFactory('XGFeatureRegistry')
-    const XGFeatureRegistryProxy = await upgrades.deployProxy(XGF, [XGHUB_PROXY_ADDRESS])
+    const XGFeatureRegistryProxy = await upgrades.upgradeProxy(proxyAddress, XGF)
     await XGFeatureRegistryProxy.deployed()
 
     let frImp = await upgrades.erc1967.getImplementationAddress(XGFeatureRegistryProxy.address)
-    console.log("Implementation at: ", frImp)
 
-    console.log("Deployed XGFeatureRegistry to: ", XGFeatureRegistryProxy.address)
+    console.log("Upgraded XGFeatureRegistry, new implementation deployed to: ", frImp)
+
+    const contract = await XGF.attach(proxyAddress)
+    const hub = await contract.hub()
+    console.log("Hub address: ", hub)
     
 }
 

@@ -24,34 +24,6 @@ async function deploy() {
     let hubImp = await upgrades.erc1967.getImplementationAddress(XGHubProxy.address)
     console.log("Implementation at: ", hubImp)
 
-    // let retry = 0
-    // while (retry < 5) {
-    //     try {
-
-    //         let hubImp = await upgrades.erc1967.getImplementationAddress(XGHubProxy.address)
-    //         console.log("Implementation at: ", hubImp)
-
-    //         await run(`verify:verify`, {
-    //           address: hubImp,
-    //           constructorArguments: [],
-    //         });
-
-    //         break
-
-    //      } catch (e) {
-    //         console.log(e.message)
-    //         console.log("Retrying...")
-    //         retry++
-
-    //         await new Promise(r => setTimeout(r, 5000));
-
-    //         if (retry == 5) {
-    //           console.log("Unable to verify contracts.")
-    //         }
-
-    //      }
-    // }
-
     console.log("Deployed XGHub to: ", XGHubProxy.address)
     
 }
