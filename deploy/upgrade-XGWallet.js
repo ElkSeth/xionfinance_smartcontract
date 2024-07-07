@@ -13,7 +13,7 @@ async function deploy() {
     gasPrice = parseInt(gasPrice * 1.2)
 
     // Address of the deployed proxy
-    const proxyAddress = "0xe3765f851977Ed7B377D0234e9275845fc960775"; // Replace with your existing proxy address
+    const proxyAddress = "0x57A56BEaD1D0B65Ab5E3AcF528ECced8FbEb9378"; // Replace with your existing proxy address
 
     const XGW = await ethers.getContractFactory('XGWallet')
     const XGWalletProxy = await upgrades.upgradeProxy(proxyAddress, XGW)

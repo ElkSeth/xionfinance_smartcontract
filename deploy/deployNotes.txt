@@ -18,11 +18,16 @@ Order:
 Command:
     ex. npx hardhat run ./deploy/deploy-XGHub.js --network polygon
     npx hardhat run ./deploy/deploy-XGWallet.js --network polygon
-    npx hardhat verify --network polygon 0x90851891D0625a817B4d5e5Ffe1e0134128f4C2f
+    npx hardhat run ./deploy/deploy-XGPurchases.js --network polygon
+    npx hardhat run ./deploy/deploy-XGSubscriptions.js --network polygon
+    npx hardhat run ./deploy/deploy-XGFeatureRegistry.js --network polygon
+    npx hardhat run ./deploy/deploy-initXGHub.js --network polygon
+    npx hardhat verify --network polygon 0x089cA07D2473610BE839130C498F5B51aCF0c6bD
+    npx hardhat run ./deploy/upgrade-XGWallet.js --network polygon
     npx hardhat clean
     npx hardhat compile
     npx hardhat run ./deploy/deploy-X.js --network polygon
-        npx hardhat verify --network polygon 0x359606c8385E04d08c08FA7E07CCc72AF622C78E
+        npx hardhat verify --network polygon 0x57A56BEaD1D0B65Ab5E3AcF528ECced8FbEb9378
         npx hardhat run ./deploy/deploy-XGSubscriptions.js --network polygon
                 npx hardhat verify --network polygon 0x95Bf16E56Cb8038192dbf3F0c4D38b876FF24471
                 npx hardhat run ./deploy/deploy-XGPurchases.js --network polygon

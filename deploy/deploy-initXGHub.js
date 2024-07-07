@@ -4,12 +4,12 @@ const XGHubABI = require("../artifacts/contracts/subscriptions/XGHub.sol/XGHub.j
 async function deploy() {
 
     // change before deployment
-    const XGFeatureRegistryProxy = "0xa1BE7564Bb461EdDb5FCCD372951AB9BB82aF045"
-    const XGWalletProxy = "0x1b3445aCf35B01EDd59fF5F5eE581d952455609f"
-    const XGPurchasesProxy = "0x44b78522d6ea6B71Da29A553307F420a2ab78318"
-    const XGSubscriptionsProxy = "0x6824Aa38bFD42d9c1e1E097e0EaCFF2d78fF1CbF"
+    const XGFeatureRegistryProxy = "0x62E7DC60B83018b89DE7438f09f63290e48910fA"
+    const XGWalletProxy = "0xFFec034a192bA00428DE5FfF584D4E5A70C67e08"
+    const XGPurchasesProxy = "0xf7ACd9fC82a8a77626E1B79d454832cbE842f501"
+    const XGSubscriptionsProxy = "0x87a3B432d74480bD5438B7974e821fEC4caae29E"
     const FeeWalletAddress = "0xc4445886d2c0dfb3198447315C8C92399E6f9889"
-    const XGHUB_PROXY_ADDRESS = "0x638988b3D33e0c7E68CF801787a8C37D063431c2"
+    const XGHUB_PROXY_ADDRESS = "0x3EadE78241139a95c41Ecb0050e5E36357aF3b80"
     //
 
     const [deployer] = await ethers.getSigners()

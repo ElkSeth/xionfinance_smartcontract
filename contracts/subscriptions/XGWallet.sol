@@ -50,16 +50,16 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         uint256 merchantStakingDeposits;
     }
 
+    mapping (address => uint256) public merchantRefundFeeInBP;
+
     event FeeDeductedForMerchant(address merchant, uint256 amount, address token, bytes32 operationId);
+    event RefundSent(address token, address to, uint256 amount, bytes32 operationId);
 
     function initialize(
         address _hub,
         address _freezer,
-        address[] calldata _tokens,
-        address _xgt
+        address[] calldata _tokens
     ) external initializer {
-        XGT_ADDRESS = _xgt;
-        xgt = IERC20(XGT_ADDRESS);
         hub = IXGHub(_hub);
         freezer = IXGTFreezer(_freezer);
         for (uint256 i; i < _tokens.length; ++i) {
@@ -149,11 +149,23 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         merchantFeeInBP[_merchant] = _paymentFeeBP;
     }
 
-    function setMerchantInfo(address _merchant, address _parent, uint256 _paymentFeeBP)
+    function setMerchantRefundFee(address _merchant, uint256 _refundFeeBP)
+        public
+        onlyOwner
+    {
+        require(
+            _refundFeeBP <= 10000,
+            "Can't have a fee over more than 100%"
+        );
+        merchantRefundFeeInBP[_merchant] = _refundFeeBP;
+    }
+
+    function setMerchantInfo(address _merchant, address _parent, uint256 _paymentFeeBP, uint256 _refundFeeBP)
         external
         onlyOwner
     {
         setMerchantFee(_merchant, _paymentFeeBP);
+        setMerchantRefundFee(_merchant, _refundFeeBP);
         setMerchantParent(_merchant, _parent);
     }
 
@@ -220,10 +232,10 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     ) external whenNotPaused {
         require(address(tokens[_token]) != address(0), "Token must be supported");
         require(_user != address(0), "Empty address provided");
-        _transferFromToken(_token, _user, address(this), _amount);
-        userBalance[_user].restrictedBalances[_token] = userBalance[_user].restrictedBalances[_token].add(
-            _amount
-        );
+         
+        _transferFromToken(_token, msg.sender, address(this), _amount);
+         
+        userBalance[_user].restrictedBalances[_token] = userBalance[_user].restrictedBalances[_token].add(_amount);
         userBalance[_user].balances[_token] = userBalance[_user].balances[_token].add(_amount);
     }
 
@@ -294,6 +306,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     ) external onlyModule returns (bool) {
         require(address(tokens[_token]) != address(0), "Token must be supported");
         require(_bridgeWallet == address(0) || bridgeFeeWallet[_bridgeWallet], "Bridge must be supported");
+        require(merchantFeeInBP[_to] > 0, "Unauthorized merchant"); // Merchant with 0 fee is considered unauthorized (assumes fee for authorized merchant is always > 0)
         if (_amount == 0) {
             return true;
         }
@@ -323,7 +336,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
 
         if (tokensLeft == 0) {
-            _removeMaxFromRestrictedTokenBalance(_token, _from, _amount);
+            _removeMaxFromRestrictedTokenBalance(_from, _token, _amount);
             uint256 amountAfterFreeze = _amount;
             if (stakeRevenue[_to]) {
                 _stake(_to, amountAfterFreeze);
@@ -345,6 +358,24 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
 
         return false;
+    }
+
+    function sendRefund(address _token, address _from, address _to, uint256 _amount, bytes32 _operationId) external onlyModule returns (bool) {
+        require(merchantRefundFeeInBP[_from] > 0, "Unauthorized merchant"); // Using merchantRefundFeeInBP for whitelisting
+        if (_amount == 0) {
+            return true;
+        }
+        uint256 refundFee = _amount.mul(merchantRefundFeeInBP[_from]).div(10000);
+        uint256 leftover = _amount.sub(refundFee);
+        _transferFromToken(_token, _from, feeWallet, refundFee);
+        _transferFromToken(_token, _from, _to, leftover);
+        if (totalCheckoutValue[_token] > _amount) {
+            totalCheckoutValue[_token] = totalCheckoutValue[_token].sub(_amount);
+        } else {
+            totalCheckoutValue[_token] = 0;
+        }
+        emit RefundSent(_token, _to, _amount, _operationId);
+        return true;
     }
 
     function _freeze(address _to, uint256 _amount)

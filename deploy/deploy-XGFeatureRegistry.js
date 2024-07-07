@@ -4,7 +4,7 @@ async function deploy() {
 
     // change before deployment
     const XGT_ADDRESS = "0x9EB8A789Ed1Bd38D281962b523349d5D17A37d47"
-    const XGHUB_PROXY_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+    const XGHUB_PROXY_ADDRESS = "0x3EadE78241139a95c41Ecb0050e5E36357aF3b80"
     //
 
     const [deployer] = await ethers.getSigners()
