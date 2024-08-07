@@ -12,7 +12,7 @@ async function deploy() {
     let gasPrice = await ethers.provider.getGasPrice()
     gasPrice = parseInt(gasPrice * 1.2)
 
-    // Address of the deployed proxy
+    // Address of deployed proxy
     const proxyAddress = "0x57A56BEaD1D0B65Ab5E3AcF528ECced8FbEb9378"; // Replace with your existing proxy address
 
     const XGW = await ethers.getContractFactory('XGWallet')
