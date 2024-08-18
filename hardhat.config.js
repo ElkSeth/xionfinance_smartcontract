@@ -29,11 +29,11 @@
   networks: {
     hardhat: {
       forking: {
-        url: "https://polygon-rpc.com",
+        url: "https://polygon.llamarpc.com",
       },
     },
     polygon: {
-      url: "https://polygon-rpc.com",
+      url: "https://polygon.llamarpc.com",
       accounts: [privateKey],
       gasPrice: 120000000000,
       timeout: 100_000

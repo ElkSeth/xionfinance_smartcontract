@@ -4,12 +4,12 @@ const XGHubABI = require("../artifacts/contracts/subscriptions/XGHub.sol/XGHub.j
 async function deploy() {
 
     // change before deployment
-    const XGFeatureRegistryProxy = "0x62E7DC60B83018b89DE7438f09f63290e48910fA"
-    const XGWalletProxy = "0xFFec034a192bA00428DE5FfF584D4E5A70C67e08"
-    const XGPurchasesProxy = "0xf7ACd9fC82a8a77626E1B79d454832cbE842f501"
-    const XGSubscriptionsProxy = "0x87a3B432d74480bD5438B7974e821fEC4caae29E"
+    const XGFeatureRegistryProxy = "0x7E91b63E0e90F7c7195D6Ee7B8D5B956f390E293"
+    const XGWalletProxy = "0xF483E82eCB700Ecb6E6397b05E02f4236A41e108"
+    const XGPurchasesProxy = "0x58554B7d64ca9A4e59CD64BE8C18094A0D0ffEf0"
+    const XGSubscriptionsProxy = "0x8F4FB237E06EAc740Ce32F8dd9B624B4Aa8A7DE4"
     const FeeWalletAddress = "0xc4445886d2c0dfb3198447315C8C92399E6f9889"
-    const XGHUB_PROXY_ADDRESS = "0x3EadE78241139a95c41Ecb0050e5E36357aF3b80"
+    const XGHUB_PROXY_ADDRESS = "0xf1B81f846B6EB58A530De6c6Cd850385A7d94302"
     //
 
     const [deployer] = await ethers.getSigners()
@@ -23,24 +23,19 @@ async function deploy() {
 
     console.log("Initializing XGHub...")
 
-    let tx = await XGHubProxy.setFeaturesAddress(XGFeatureRegistryProxy)
-     
+    await XGHubProxy.setFeaturesAddress(XGFeatureRegistryProxy)
     console.log("Set features address: ", XGFeatureRegistryProxy)
 
-    tx = await XGHubProxy.setWalletAddress(XGWalletProxy)
-    await tx.wait()
+    await XGHubProxy.setWalletAddress(XGWalletProxy)
     console.log("Set wallet address: ", XGWalletProxy)
 
-    tx = await XGHubProxy.setPurchasesModule(XGPurchasesProxy)
-    await tx.wait()
+    await XGHubProxy.setPurchasesModule(XGPurchasesProxy)
     console.log("Set purchases address: ", XGPurchasesProxy)
 
-    tx = await XGHubProxy.setSubscriptionsModule(XGSubscriptionsProxy)
-    await tx.wait()
+    await XGHubProxy.setSubscriptionsModule(XGSubscriptionsProxy)
     console.log("Set subscriptions address: ", XGSubscriptionsProxy)
 
-    tx = await XGHubProxy.setFeeWallet(FeeWalletAddress)
-    await tx.wait()
+    await XGHubProxy.setFeeWallet(FeeWalletAddress)
     console.log("Set fee wallet address: ", FeeWalletAddress)
 
     console.log("Finished Initializing XGHub.")

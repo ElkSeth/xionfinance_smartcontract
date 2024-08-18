@@ -18,16 +18,16 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     IERC20 public xgt;
 
     address[] public tokenAddresses;
-    mapping (address => IERC20) public tokens;
+    mapping(address => IERC20) public tokens;
     IXGTFreezer public freezer;
     IStakingModule public staking;
     address public subscriptions;
     address public feeWallet;
-    mapping (address => bool) public bridgeFeeWallet;
+    mapping(address => bool) public bridgeFeeWallet;
     IXGHub public hub;
     address public purchases;
 
-    mapping (address => uint256) public totalCheckoutValue;
+    mapping(address => uint256) public totalCheckoutValue;
 
     uint256 public FREEZE_PERCENT_OF_MERCHANT_PAYMENT_IN_BP;
     uint256 public DEPOSIT_FEE_IN_BP;
@@ -35,8 +35,8 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     uint256 public PAYMENT_FEE_IN_BP;
     uint256 public BRIDGE_FEE_IN_BP;
 
-    mapping (address => uint256) public merchantFeeInBP;
-    mapping (address => address) public merchantParent;
+    mapping(address => uint256) public merchantFeeInBP;
+    mapping(address => address) public merchantParent;
 
     mapping(address => bool) public stakeRevenue;
     mapping(address => UserBalanceSheet) public userBalance;
@@ -44,28 +44,41 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         public test;
 
     struct UserBalanceSheet {
-        mapping (address => uint256) balances;
-        mapping (address => uint256) restrictedBalances;
+        mapping(address => uint256) balances;
+        mapping(address => uint256) restrictedBalances;
         uint256 merchantStakingShares;
         uint256 merchantStakingDeposits;
     }
 
-    mapping (address => uint256) public merchantRefundFeeInBP;
+    mapping(address => uint256) public merchantRefundFeeInBP;
 
-    event FeeDeductedForMerchant(address merchant, uint256 amount, address token, bytes32 operationId);
-    event RefundSent(address token, address to, uint256 amount, bytes32 operationId);
+    event FeeDeductedForMerchant(
+        address merchant,
+        uint256 amount,
+        address token,
+        bytes32 operationId
+    );
+    event RefundSent(
+        address token,
+        address to,
+        uint256 amount,
+        bytes32 operationId
+    );
 
     function initialize(
         address _hub,
         address _freezer,
-        address[] calldata _tokens
+        address[] calldata _tokens,
+        address _xgt
     ) external initializer {
         hub = IXGHub(_hub);
         freezer = IXGTFreezer(_freezer);
+        XGT_ADDRESS = _xgt;
         for (uint256 i; i < _tokens.length; ++i) {
             tokenAddresses.push(_tokens[i]);
             tokens[_tokens[i]] = IERC20(_tokens[i]);
         }
+        xgt = IERC20(XGT_ADDRESS);
         xgt.approve(_freezer, 2**256 - 1);
 
         FREEZE_PERCENT_OF_MERCHANT_PAYMENT_IN_BP = 100;
@@ -84,7 +97,10 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function setSupportedToken(address _token) external onlyOwner {
-        require(address(tokens[_token]) == address(0), "Token must not already be supported");
+        require(
+            address(tokens[_token]) == address(0),
+            "Token must not already be supported"
+        );
         tokenAddresses.push(_token);
         tokens[_token] = IERC20(_token);
         if (_token == XGT_ADDRESS) {
@@ -113,12 +129,17 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         FREEZE_PERCENT_OF_MERCHANT_PAYMENT_IN_BP = _freezeBP;
     }
 
-    function setFees(uint256 _depositFeeBP, uint256 _withdrawFeeBP, uint256 _paymentFeeBP, uint256 _bridgeFeeBP)
-        external
-        onlyOwner
-    {
+    function setFees(
+        uint256 _depositFeeBP,
+        uint256 _withdrawFeeBP,
+        uint256 _paymentFeeBP,
+        uint256 _bridgeFeeBP
+    ) external onlyOwner {
         require(
-            _depositFeeBP <= 10000 && _withdrawFeeBP <= 10000 && _paymentFeeBP <= 10000 && _bridgeFeeBP <= 10000,
+            _depositFeeBP <= 10000 &&
+                _withdrawFeeBP <= 10000 &&
+                _paymentFeeBP <= 10000 &&
+                _bridgeFeeBP <= 10000,
             "Can't have a fee over more than 100%"
         );
         DEPOSIT_FEE_IN_BP = _depositFeeBP;
@@ -131,10 +152,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         public
         onlyOwner
     {
-        require(
-            _merchant != address(0),
-            "Merchant address cannot be zero"
-        );
+        require(_merchant != address(0), "Merchant address cannot be zero");
         merchantParent[_merchant] = _parent;
     }
 
@@ -142,10 +160,7 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         public
         onlyOwner
     {
-        require(
-            _paymentFeeBP <= 10000,
-            "Can't have a fee over more than 100%"
-        );
+        require(_paymentFeeBP <= 10000, "Can't have a fee over more than 100%");
         merchantFeeInBP[_merchant] = _paymentFeeBP;
     }
 
@@ -153,17 +168,16 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         public
         onlyOwner
     {
-        require(
-            _refundFeeBP <= 10000,
-            "Can't have a fee over more than 100%"
-        );
+        require(_refundFeeBP <= 10000, "Can't have a fee over more than 100%");
         merchantRefundFeeInBP[_merchant] = _refundFeeBP;
     }
 
-    function setMerchantInfo(address _merchant, address _parent, uint256 _paymentFeeBP, uint256 _refundFeeBP)
-        external
-        onlyOwner
-    {
+    function setMerchantInfo(
+        address _merchant,
+        address _parent,
+        uint256 _paymentFeeBP,
+        uint256 _refundFeeBP
+    ) external onlyOwner {
         setMerchantFee(_merchant, _paymentFeeBP);
         setMerchantRefundFee(_merchant, _refundFeeBP);
         setMerchantParent(_merchant, _parent);
@@ -173,7 +187,10 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         feeWallet = _feeWallet;
     }
 
-    function setBridgeFeeWallet(address _bridgeAddress, bool active) external onlyOwner {
+    function setBridgeFeeWallet(address _bridgeAddress, bool active)
+        external
+        onlyOwner
+    {
         bridgeFeeWallet[_bridgeAddress] = active;
     }
 
@@ -202,19 +219,32 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         _depositToken(msg.sender, msg.sender, _token, _amount);
     }
 
-    function depositTokenForUser(address _user, address _token, uint256 _amount) external {
+    function depositTokenForUser(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) external {
         _depositToken(_user, _user, _token, _amount);
     }
 
-    function depositTokenOnBehalfOfUser(address _user, address _token, uint256 _amount) external {
+    function depositTokenOnBehalfOfUser(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) external {
         _depositToken(msg.sender, _user, _token, _amount);
     }
 
-    function _depositToken(address _payer, address _user, address _token, uint256 _amount)
-        internal
-        whenNotPaused
-    {
-        require(address(tokens[_token]) != address(0), "Token must be supported");
+    function _depositToken(
+        address _payer,
+        address _user,
+        address _token,
+        uint256 _amount
+    ) internal whenNotPaused {
+        require(
+            address(tokens[_token]) != address(0),
+            "Token must be supported"
+        );
         require(_user != address(0), "Empty address provided");
         uint256 fee = (_amount.mul(DEPOSIT_FEE_IN_BP)).div(10000);
         uint256 rest = _amount.sub(fee);
@@ -222,7 +252,9 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
             _transferFromToken(_token, _payer, feeWallet, fee);
         }
         _transferFromToken(_token, _payer, address(this), rest);
-        userBalance[_user].balances[_token] = userBalance[_user].balances[_token].add(rest);
+        userBalance[_user].balances[_token] = userBalance[_user]
+            .balances[_token]
+            .add(rest);
     }
 
     function depositToRestrictedTokenBalanceOfUser(
@@ -230,35 +262,47 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         address _token,
         uint256 _amount
     ) external whenNotPaused {
-        require(address(tokens[_token]) != address(0), "Token must be supported");
+        require(
+            address(tokens[_token]) != address(0),
+            "Token must be supported"
+        );
         require(_user != address(0), "Empty address provided");
-         
+
         _transferFromToken(_token, msg.sender, address(this), _amount);
-         
-        userBalance[_user].restrictedBalances[_token] = userBalance[_user].restrictedBalances[_token].add(_amount);
-        userBalance[_user].balances[_token] = userBalance[_user].balances[_token].add(_amount);
+
+        userBalance[_user].restrictedBalances[_token] = userBalance[_user]
+            .restrictedBalances[_token]
+            .add(_amount);
+        // userBalance[_user].balances[_token] = userBalance[_user]
+        //     .balances[_token]
+        //     .add(_amount);
     }
 
     function withdrawToken(address _token, uint256 _amount) public {
         _withdrawToken(msg.sender, _token, _amount);
     }
 
-    function withdrawUSDTForUser(address _user, address _token, uint256 _amount)
-        public
-        onlyAuthorized
-    {
+    function withdrawUSDTForUser(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) public onlyAuthorized {
         _withdrawToken(_user, _token, _amount);
     }
 
-    function _withdrawToken(address _user, address _token, uint256 _amount)
-        internal
-        whenNotPaused
-    {
-        require(address(tokens[_token]) != address(0), "Token must be supported");
+    function _withdrawToken(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) internal whenNotPaused {
+        require(
+            address(tokens[_token]) != address(0),
+            "Token must be supported"
+        );
         require(_user != address(0), "Empty address provided");
         require(
             _amount <=
-                userBalance[_user].balances[_token].sub(userBalance[_user].restrictedBalances[_token]),
+                userBalance[_user].balances[_token],
             "Not enough in the users balance."
         );
         _removeFromTokenBalance(_user, _token, _amount);
@@ -272,12 +316,15 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function _transferFromToken(
-        address _token, 
+        address _token,
         address _sender,
         address _receiver,
         uint256 _amount
     ) internal whenNotPaused {
-        require(address(tokens[_token]) != address(0), "Token must be supported");
+        require(
+            address(tokens[_token]) != address(0),
+            "Token must be supported"
+        );
         if (_amount > 0) {
             require(
                 tokens[_token].transferFrom(_sender, _receiver, _amount),
@@ -286,30 +333,45 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
     }
 
-    function _transferToken(address _token, address _receiver, uint256 _amount)
-        internal
-        whenNotPaused
-    {
-        require(address(tokens[_token]) != address(0), "Token must be supported");
+    function _transferToken(
+        address _token,
+        address _receiver,
+        uint256 _amount
+    ) internal whenNotPaused {
+        require(
+            address(tokens[_token]) != address(0),
+            "Token must be supported"
+        );
         if (_amount > 0) {
-            require(tokens[_token].transfer(_receiver, _amount), "Token transfer failed.");
+            require(
+                tokens[_token].transfer(_receiver, _amount),
+                "Token transfer failed."
+            );
         }
     }
 
     function payWithToken(
-        address _token, 
+        address _token,
         address _from,
         address _to,
         uint256 _amount,
         address _bridgeWallet,
         bytes32 _operationId
     ) external onlyModule returns (bool) {
-        require(address(tokens[_token]) != address(0), "Token must be supported");
-        require(_bridgeWallet == address(0) || bridgeFeeWallet[_bridgeWallet], "Bridge must be supported");
-        require(merchantFeeInBP[_to] > 0, "Unauthorized merchant"); // Merchant with 0 fee is considered unauthorized (assumes fee for authorized merchant is always > 0)
+        require(
+            address(tokens[_token]) != address(0),
+            "Token must be supported"
+        );
+        require(
+            _bridgeWallet == address(0) || bridgeFeeWallet[_bridgeWallet],
+            "Bridge must be supported"
+        );
+        require(merchantFeeInBP[_to] > 0, "Unauthorized merchant");
+
         if (_amount == 0) {
             return true;
         }
+
         uint256[3] memory fees; // xionFee, bridgeFee, merchantFees
 
         fees[0] = (_amount.mul(PAYMENT_FEE_IN_BP)).div(10000);
@@ -319,12 +381,32 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
 
         address current = _to;
         while (current != address(0)) {
-            fees[2] = fees[2].add((_amount.mul(merchantFeeInBP[current])).div(10000));
+            fees[2] = fees[2].add(
+                (_amount.mul(merchantFeeInBP[current])).div(10000)
+            );
             current = merchantParent[current];
         }
         uint256 leftover = _amount.sub(fees[0]).sub(fees[1]).sub(fees[2]);
 
-        uint256 tokensLeft = _removeMaxFromTokenBalance(_from, _token, _amount);
+        uint256 tokensLeft = 0;
+
+        uint256 restrictedLeft = _removeMaxFromRestrictedTokenBalance(
+            _from,
+            _token,
+            _amount
+        );
+
+        tokensLeft = restrictedLeft;
+
+        uint256 walletLeft = 0;
+        if (tokensLeft > 0) {
+            walletLeft = _removeMaxFromTokenBalance(
+                _from,
+                _token,
+                tokensLeft
+            );
+            tokensLeft = walletLeft;
+        }
 
         if (
             tokensLeft > 0 &&
@@ -336,41 +418,58 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
 
         if (tokensLeft == 0) {
-            _removeMaxFromRestrictedTokenBalance(_from, _token, _amount);
-            uint256 amountAfterFreeze = _amount;
+            address feeToken = _token;
             if (stakeRevenue[_to]) {
-                _stake(_to, amountAfterFreeze);
+                _stake(_to, _amount);
             } else {
                 _transferToken(_token, feeWallet, fees[0]);
                 _transferToken(_token, _bridgeWallet, fees[1]);
                 current = _to;
                 while (current != address(0)) {
-                    uint256 feeAmount = (_amount.mul(merchantFeeInBP[current])).div(10000);
+                    uint256 feeAmount = (
+                        _amount.mul(merchantFeeInBP[current])
+                    ).div(10000);
                     _transferToken(_token, current, feeAmount);
-                    emit FeeDeductedForMerchant(current, feeAmount, _token, _operationId);
+                    emit FeeDeductedForMerchant(
+                        current,
+                        feeAmount,
+                        feeToken,
+                        _operationId
+                    );
                     current = merchantParent[current];
                 }
                 _transferToken(_token, _to, leftover);
             }
-            // does not include any fees!
-            totalCheckoutValue[_token] = totalCheckoutValue[_token].add(_amount);
+            totalCheckoutValue[feeToken] = totalCheckoutValue[feeToken].add(
+                _amount
+            );
             return true;
         }
 
         return false;
     }
 
-    function sendRefund(address _token, address _from, address _to, uint256 _amount, bytes32 _operationId) external onlyModule returns (bool) {
+    function sendRefund(
+        address _token,
+        address _from,
+        address _to,
+        uint256 _amount,
+        bytes32 _operationId
+    ) external onlyModule returns (bool) {
         require(merchantRefundFeeInBP[_from] > 0, "Unauthorized merchant"); // Using merchantRefundFeeInBP for whitelisting
         if (_amount == 0) {
             return true;
         }
-        uint256 refundFee = _amount.mul(merchantRefundFeeInBP[_from]).div(10000);
+        uint256 refundFee = _amount.mul(merchantRefundFeeInBP[_from]).div(
+            10000
+        );
         uint256 leftover = _amount.sub(refundFee);
         _transferFromToken(_token, _from, feeWallet, refundFee);
         _transferFromToken(_token, _from, _to, leftover);
         if (totalCheckoutValue[_token] > _amount) {
-            totalCheckoutValue[_token] = totalCheckoutValue[_token].sub(_amount);
+            totalCheckoutValue[_token] = totalCheckoutValue[_token].sub(
+                _amount
+            );
         } else {
             totalCheckoutValue[_token] = 0;
         }
@@ -415,14 +514,21 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
     }
 
-    function _removeFromTokenBalance(address _user, address _token, uint256 _amount) internal {
-        userBalance[_user].balances[_token] = userBalance[_user].balances[_token].sub(_amount);
+    function _removeFromTokenBalance(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) internal {
+        userBalance[_user].balances[_token] = userBalance[_user]
+            .balances[_token]
+            .sub(_amount);
     }
 
-    function _removeMaxFromTokenBalance(address _user, address _token, uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _removeMaxFromTokenBalance(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) internal returns (uint256) {
         if (_amount >= userBalance[_user].balances[_token]) {
             uint256 usedBalance = userBalance[_user].balances[_token];
             if (usedBalance > 0) {
@@ -435,31 +541,43 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         }
     }
 
-    function _removeFromRestrictedTokenBalance(address _user, address _token, uint256 _amount)
-        internal
-    {
-        userBalance[_user].restrictedBalances[_token] = userBalance[_user].restrictedBalances[_token].sub(
-            _amount
-        );
+    function _removeFromRestrictedTokenBalance(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) internal {
+        userBalance[_user].restrictedBalances[_token] = userBalance[_user]
+            .restrictedBalances[_token]
+            .sub(_amount);
     }
 
-    function _removeMaxFromRestrictedTokenBalance(address _user, address _token, uint256 _amount)
-        internal
-    {
+    function _removeMaxFromRestrictedTokenBalance(
+        address _user,
+        address _token,
+        uint256 _amount
+    ) internal returns (uint256) {
         if (_amount >= userBalance[_user].restrictedBalances[_token]) {
-            _removeFromRestrictedTokenBalance(
-                _user,
-                _token,
-                userBalance[_user].restrictedBalances[_token]
-            );
+            uint256 usedBalance = userBalance[_user].restrictedBalances[_token];
+            if (usedBalance > 0) {
+                _removeFromRestrictedTokenBalance(_user, _token, usedBalance);
+            }
+            return _amount.sub(usedBalance);
         } else {
             _removeFromRestrictedTokenBalance(_user, _token, _amount);
+            return 0;
         }
     }
 
-    function getUserTokenBalance(address _token, address _user) external view returns (uint256) {
+    function getUserTokenBalance(address _token, address _user)
+        external
+        view
+        returns (uint256)
+    {
         uint256 tokenBalance = userBalance[_user].balances[_token];
-        if (_token == XGT_ADDRESS && userBalance[_user].merchantStakingDeposits > 0) {
+        if (
+            _token == XGT_ADDRESS &&
+            userBalance[_user].merchantStakingDeposits > 0
+        ) {
             (uint256 stakingBalance, , uint256 stakingShares) = staking
                 .getCurrentUserInfo(address(this));
             tokenBalance = tokenBalance.add(
@@ -502,3 +620,4 @@ contract XGWallet is OwnableUpgradeable, PausableUpgradeable {
         _;
     }
 }
+

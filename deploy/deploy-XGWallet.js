@@ -4,9 +4,8 @@ async function deploy() {
 
     // change before deployment
     const XGT_ADDRESS = "0x9EB8A789Ed1Bd38D281962b523349d5D17A37d47"
-    const XGHUB_PROXY_ADDRESS = "0x3EadE78241139a95c41Ecb0050e5E36357aF3b80"
+    const XGHUB_PROXY_ADDRESS = "0xf1B81f846B6EB58A530De6c6Cd850385A7d94302"
     const XGWalletTokens = ["0xc2132D05D31c914a87C6611C10748AEb04B58e8F"]
-    //
 
     const [deployer] = await ethers.getSigners()
 
@@ -26,7 +25,7 @@ async function deploy() {
     gasPrice = parseInt(gasPrice * 1.2)
 
     const XGW = await ethers.getContractFactory('XGWallet')
-    const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS])
+    const XGWalletProxy = await upgrades.deployProxy(XGW, [XGHUB_PROXY_ADDRESS, XGTFreezer.address, XGWalletTokens, XGT_ADDRESS], {"gasPrice": 120000000000})
     await XGWalletProxy.deployed()
 
     let walImp = await upgrades.erc1967.getImplementationAddress(XGWalletProxy.address)
